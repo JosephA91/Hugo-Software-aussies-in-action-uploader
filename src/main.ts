@@ -1,44 +1,98 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, Menu, ipcMain, dialog } from "electron";
 import * as path from "path";
+import buildMenu from "./lib/menu";
+import formatFolderName from "./lib/format-folder-name";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+
+require("dotenv").config();
+
+// Configure AWS with your access and secret key.
+const { AWS_S3_ACCESS_KEY, AWS_S3_SECRET_KEY, AWS_S3_BUCKET_NAME } =
+  process.env;
+
+const s3Client = new S3Client({
+  region: "ap-southeast-2",
+  credentials: {
+    accessKeyId: AWS_S3_ACCESS_KEY,
+    secretAccessKey: AWS_S3_SECRET_KEY,
+  },
+});
+
+const dotenv = require("dotenv");
+
+process.env.NODE_ENV = "development";
+
+const isDev = process.env.NODE_ENV !== "production" ? true : false;
+const isMac = process.platform === "darwin" ? true : false;
+const menu = buildMenu({ app, isMac, isDev });
+
+let mainWindow;
 
 function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
+    title: "Aussies in Action Uploader",
     height: 600,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
+      nodeIntegration: true,
+      contextIsolation: false,
     },
     width: 800,
   });
 
   // and load the index.html of the app.
   mainWindow.loadFile(path.join(__dirname, "../index.html"));
-
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools();
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
-  createWindow();
-
-  app.on("activate", function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
+ipcMain.on("select-folder", (event) => {
+  dialog
+    .showOpenDialog({
+      properties: ["openDirectory"],
+    })
+    .then((result) => {
+      if (!result.canceled) {
+        event.reply("selected-folder", result.filePaths[0]);
+      }
+    });
 });
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
+ipcMain.on("upload-folder", async (event, folderPath, folderName) => {
+  const formattedFolderName = formatFolderName({ folderName });
+
+  // Create a new folder with the formatted name in S3 bucket
+  const params = {
+    Bucket: AWS_S3_BUCKET_NAME,
+    Key: `${formattedFolderName}/`,
+  };
+
+  console.log(params);
+
+  try {
+    const data = await s3Client.send(new PutObjectCommand(params));
+    console.log(data); // successful response
+  } catch (err) {
+    console.log(err); // an error occurred
+  }
+});
+
+app.on("ready", () => {
+  createWindow();
+
+  mainWindow = Menu.buildFromTemplate(menu);
+  Menu.setApplicationMenu(mainWindow);
+
+  mainWindow.on("menu-will-close", () => (mainWindow = null));
+});
+
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
+  if (!isMac) {
     app.quit();
   }
 });
 
-// In this file you can include the rest of your app"s specific main process
-// code. You can also put them in separate files and require them here.
+app.on("activate", () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
+});

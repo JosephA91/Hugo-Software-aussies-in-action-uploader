@@ -2,24 +2,109 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Hello World!</title>
+    <title>Aussies in Action Uploader</title>
     <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'"
+      content="script-src 'self' 'unsafe-inline'"
     />
-    <meta
-      http-equiv="X-Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'"
+    <link
+      rel="stylesheet"
+      href="node_modules/bootstrap/dist/css/bootstrap.min.css"
     />
   </head>
   <body>
-    <h1>Hello World!</h1>
-    We are using Node.js <span id="node-version"></span>, Chromium
-    <span id="chrome-version"></span>, and Electron
-    <span id="electron-version"></span>.
+    <div class="container mt-5">
+      <h1 class="text-center">Aussies in Action Uploader</h1>
+
+      <div class="row mt-5">
+        <div class="col-md-8 offset-md-2">
+          <div class="card card-body">
+            <div class="mb-3">
+              <button
+                type="button"
+                class="btn btn-primary mb-2"
+                id="select-folder"
+              >
+                Select Folder
+              </button>
+
+              <p id="folder-path"></p>
+
+              <div class="mt-3">
+                <label for="destination-folder" class="form-label"
+                  >S3 Destination Folder Name</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="destination-folder"
+                  placeholder="Enter S3 destination folder name"
+                />
+              </div>
+            </div>
+
+            <!-- ADD FOLDER NAME TO UPLOAD TOO -->
+            <div class="row">
+              <div class="col-6">
+                <div class="d-grid gap-2">
+                  <button
+                    type="button"
+                    class="btn btn-danger"
+                    id="clear-folder-path"
+                    disabled
+                  >
+                    Clear Folder Path
+                  </button>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="d-grid gap-2">
+                  <button
+                    type="button"
+                    class="btn btn-primary mb-3"
+                    id="upload-button"
+                    disabled
+                  >
+                    Upload Folder
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <p class="mt-3">Upload Progress:</p>
+            <div class="progress mt-3">
+              <div
+                class="progress-bar"
+                role="progressbar"
+                style="width: 0%"
+                id="progress-bar"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Move everything to renderer.js
+
+      // Steps:
+      // 1. Select folder [x]
+      // 2. Send the path to the FE [x]
+      // 3. Render the path in the UI [x]
+      // 4. Optional.. Clear the path [x]
+      // 5. If path present, display upload the folder btn [x]
+      // 6. FE sends the path to the BE [x]
+      // 7. BE uploads the folder
+    </script>
 
     <!-- You can also require other files to run in this process -->
     <script src="./dist/renderer.js"></script>
+    <script src="./node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="./node_modules/popper.js/dist/umd/popper.min.js"></script>
+    <script src="./node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
   </body>
 </html>
